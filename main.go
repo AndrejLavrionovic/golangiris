@@ -8,5 +8,5 @@ func main() {
 }
 
 func hi(ctx *iris.Context){
-	ctx.Write("Hi there. How are you %s", "Andrej?")
+	ctx.Render("hi.html", struct { Name string }{ Name: "Andrej."})
 }
