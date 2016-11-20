@@ -50,6 +50,7 @@ type page struct{
 	Host string
 }
 func getpage(ctx *iris.Context){
+
 	ctx.Render("index.html", page{"Main Page", ctx.HostString()})
 }
 
