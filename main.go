@@ -5,6 +5,8 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"io/ioutil"
+	"encoding/json"
+	"fmt"
 )
 
 func main() {
@@ -48,10 +50,70 @@ func main() {
 type page struct{
 	Title string
 	Host string
+	JObj string
 }
+
+type JsonObj struct{
+	by string
+	descendants string
+	id int
+	kids []int
+	score int
+	text string
+	time int
+	title string
+	Type string
+	url string
+}
+
 func getpage(ctx *iris.Context){
 
-	ctx.Render("index.html", page{"Main Page", ctx.HostString()})
+	// Retrieving json object from HackerNews
+	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/item/121003.json?print=pretty")
+	if err != nil{panic(err.Error())}
+	body, err := ioutil.ReadAll(resp.Body)
+	//jsonstring := fmt.Sprintf("%s", body)
+	var f interface{}
+	json.Unmarshal(body, &f)
+
+	m := f.(map[string]interface{})
+
+	println("m is -> ", m)
+
+	j := JsonObj{}
+	for k, v := range m {
+		switch vv := v.(type) {
+		case string:
+			fmt.Println(k, "is string", vv)
+			if k == "title" {j.title = vv}
+			if k == "type" {j.Type = vv}
+			if k == "by" {j.by = vv}
+			if k == "descendants" {j.descendants = vv}
+			if k == "text" {j.text = vv}
+			if k == "url" {j.url = vv}
+		case int:
+			fmt.Println(k, "is int", vv)
+			if k == "score" {j.score = vv}
+			if k == "time" {j.time = vv}
+			if k == "id" {j.id = vv}
+		case []interface{}:
+			fmt.Println(k, "is an array:")
+			for u := range vv {
+				fmt.Println(u)
+			}
+		default:
+			fmt.Println(k, "is of a type I don't know how to handle", vv)
+		}
+	}
+
+	println("Print something")
+	println(j.title)
+	for u := range j.kids{
+		fmt.Println("j.kids -> ", u)
+	}
+	ctx.Next()
+
+	ctx.Render("index.html", page{j.title, ctx.HostString(), fmt.Sprintf("%s", body)})
 }
 
 func myhandler(c *iris.Context){

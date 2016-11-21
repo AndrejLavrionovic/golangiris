@@ -7,7 +7,7 @@
 	<body>
 		<div class="container">
 			<div class="jumbotron">
-				<h1 style=" font-family: Century Gothic;">News Discussion Forum</h1>
+				<h1 style=" font-family: Century Gothic;">{{.Title}}</h1>
 			</div>
 			<p>(Below is an example of what's returned by The API which for demo purposes, is a Placeholder for the News Feed...)</p>
 			<blockquote style="font-style: italic; 
@@ -30,5 +30,7 @@
 				</button>
 			</div>
 		</div>
+
+	{{.JsonString}}
 	</body>
 </html>
