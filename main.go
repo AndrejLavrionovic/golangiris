@@ -51,6 +51,7 @@ type page struct{
 	Title string
 	Host string
 	JObj string
+	Text string
 }
 
 type JsonObj struct{
@@ -113,7 +114,7 @@ func getpage(ctx *iris.Context){
 	}
 	ctx.Next()
 
-	ctx.Render("index.html", page{j.title, ctx.HostString(), fmt.Sprintf("%s", body)})
+	ctx.Render("index.html", page{j.title, ctx.HostString(), fmt.Sprintf("%s", body), j.text})
 }
 
 func myhandler(c *iris.Context){
