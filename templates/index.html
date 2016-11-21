@@ -9,6 +9,9 @@
 			<div class="jumbotron">
 				<h1 style=" font-family: Century Gothic;">{{.Title}}</h1>
 			</div>
+
+			<div id="bodytext"></div>
+
 			<p>{{.Text}}</p>
 			<blockquote style="font-style: italic; 
 							   font-weight: bold; 							   						   
@@ -29,8 +32,10 @@
 					<span class="glyphicon glyphicon-thumbs-down"></span>
 				</button>
 			</div>
-		</div>
 
-	{{.JsonString}}
+			<script type="text/javascript">
+				document.getElementById("bodytext").innerHTML = {{.JObj}};
+			</script>
+		</div>
 	</body>
 </html>

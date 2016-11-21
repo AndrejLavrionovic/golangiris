@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"log"
+	"github.com/guardian/gocapiclient"
+	"github.com/guardian/gocapiclient/queries"
 )
 
 func main() {
@@ -25,6 +28,16 @@ func main() {
 	api.API("/users", UserApi{}, myUsersMiddleware1, myUsersMiddleware2)
 
 	api.API("/redirect", HackerNews{}, myUsersMiddleware1, myUsersMiddleware2)
+
+	api.Get("/search", search)
+
+
+
+	//client := gocapiclient.NewGuardianContentClient("https://content.guardianapis.com/", "b1b1f668-8a1f-40ec-af20-01687425695c")
+	//searchQuery(client, GuardianAPI{})
+
+	//searchQueryPaged(client)
+	//itemQuery(client)
 
 	// Handler API
 
@@ -54,6 +67,14 @@ type page struct{
 	Text string
 }
 
+type GuardianAPI struct{
+	id string
+	title string
+	weburl string
+	apiurl string
+	body string
+}
+
 type JsonObj struct{
 	by string
 	descendants string
@@ -70,10 +91,10 @@ type JsonObj struct{
 func getpage(ctx *iris.Context){
 
 	// Retrieving json object from HackerNews
-	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/item/121003.json?print=pretty")
+	resp, err := http.Get("http://content.guardianapis.com/search?q=tech%20AND%20technology&section=technology&page=1&page-size=1&order-by=newest&api-key=b1b1f668-8a1f-40ec-af20-01687425695c")
 	if err != nil{panic(err.Error())}
 	body, err := ioutil.ReadAll(resp.Body)
-	//jsonstring := fmt.Sprintf("%s", body)
+	jsonstring := fmt.Sprintf("%s", body)
 	var f interface{}
 	json.Unmarshal(body, &f)
 
@@ -114,7 +135,7 @@ func getpage(ctx *iris.Context){
 	}
 	ctx.Next()
 
-	ctx.Render("index.html", page{j.title, ctx.HostString(), fmt.Sprintf("%s", body), j.text})
+	ctx.Render("index.html", page{j.title, ctx.HostString(), jsonstring, j.text})
 }
 
 func myhandler(c *iris.Context){
@@ -147,8 +168,95 @@ func (u HackerNews) Get(){
 	//u.HTML(iris.StatusOK, "<h3>Get all from users</h3>")
 	//u.Redirect("https://hacker-news.firebaseio.com/v0/item/121003.json?print=pretty", iris.StatusOK)
 	//u.Request.SetRequestURI("https://hacker-news.firebaseio.com/v0/item/121003.json?print=pretty")
-	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/item/121003.json?print=pretty")
+	resp, err := http.Get("http://content.guardianapis.com/search?q=tech%20AND%20technology&section=technology&page=1&page-size=1&order-by=newest&api-key=b1b1f668-8a1f-40ec-af20-01687425695c")
 	if err != nil{panic(err.Error())}
 	body, err := ioutil.ReadAll(resp.Body)
 	u.Write("%s", body)
+}
+
+/*
+func searchQueryPaged(client *gocapiclient.GuardianContentClient) {
+	searchQuery := queries.NewSearchQuery()
+	searchQuery.PageOffset = int64(10)
+
+	showParam := queries.StringParam{"q", "tech%20AND%20technology"}
+	showSection := queries.StringParam{"section", "technology"}
+	showPages := queries.StringParam{"page", "1"}
+	showPageSize := queries.StringParam{"page-seze", "1"}
+	showOrderBy := queries.StringParam{"order-by", "newest"}
+	params := []queries.Param{&showParam, showSection, showPages, showPageSize, showOrderBy}
+
+	searchQuery.Params = params
+
+	iterator := client.SearchQueryIterator(searchQuery)
+
+	for page := range iterator {
+		fmt.Println("Page: " + strconv.FormatInt(int64(page.SearchResponse.CurrentPage), 10))
+		for _, v := range page.SearchResponse.Results {
+			fmt.Println("searchQueryPaged ==> ", v.ID)
+		}
+	}
+}
+*/
+
+func searchQuery(client *gocapiclient.GuardianContentClient, g *GuardianAPI) {
+	searchQuery := queries.NewSearchQuery()
+
+	showParam := queries.StringParam{"q", "tech%20AND%20technology"}
+	showSection := queries.StringParam{"section", "technology"}
+	showPages := queries.StringParam{"page", "1"}
+	showPageSize := queries.StringParam{"page-seze", "1"}
+	showOrderBy := queries.StringParam{"order-by", "newest"}
+	showTotal := queries.StringParam{"total", "1"}
+	showFields := queries.StringParam{"show-fields", "body"}
+	params := []queries.Param{&showParam, showSection, showPages, showPageSize, showOrderBy, showTotal, showFields}
+
+	searchQuery.Params = params
+
+	err := client.GetResponse(searchQuery)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(searchQuery.Response.Status)
+	fmt.Println(searchQuery.Response.Total)
+
+	for _, v := range searchQuery.Response.Results {
+		g.title = v.WebTitle
+		g.weburl = v.WebUrl
+		g.id = v.ID
+		g.apiurl = v.ApiUrl
+		g.body = *v.Fields.Body
+		fmt.Println(v.ID)
+		fmt.Println(v.WebTitle)
+	}
+}
+
+/*
+func itemQuery(client *gocapiclient.GuardianContentClient) {
+	itemQuery := queries.NewItemQuery("technology/2016/aug/12/no-mans-sky-review-hello-games")
+
+	showParam := queries.StringParam{"show-fields", "all"}
+	params := []queries.Param{&showParam}
+
+	itemQuery.Params = params
+
+	err := client.GetResponse(itemQuery)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(itemQuery.Response.Status)
+	fmt.Println(itemQuery.Response.Content.WebTitle)
+}
+*/
+
+func search(ctx *iris.Context){
+	client := gocapiclient.NewGuardianContentClient("https://content.guardianapis.com/", "b1b1f668-8a1f-40ec-af20-01687425695c")
+	g := &GuardianAPI{}
+	searchQuery(client, g)
+
+	ctx.Render("index.html", page{g.title, ctx.HostString(), g.body, g.weburl})
 }
