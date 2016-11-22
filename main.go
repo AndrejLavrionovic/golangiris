@@ -5,11 +5,11 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"io/ioutil"
-	"encoding/json"
 	"fmt"
 	"log"
 	"github.com/guardian/gocapiclient"
 	"github.com/guardian/gocapiclient/queries"
+	"encoding/json"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 
 	api.Static("/*", "./public/*", 1)
 
-	api.Get("/", getpage)
+	api.Get("/", search)
 
 	api.Get("/mypath", func(ctx *iris.Context){
 		ctx.Write("Hello from the server on path /mypath")
@@ -29,7 +29,7 @@ func main() {
 
 	api.API("/redirect", HackerNews{}, myUsersMiddleware1, myUsersMiddleware2)
 
-	api.Get("/search", search)
+	api.Get("/search", getpage)
 
 
 
@@ -91,7 +91,7 @@ type JsonObj struct{
 func getpage(ctx *iris.Context){
 
 	// Retrieving json object from HackerNews
-	resp, err := http.Get("http://content.guardianapis.com/search?q=tech%20AND%20technology&section=technology&page=1&page-size=1&order-by=newest&api-key=b1b1f668-8a1f-40ec-af20-01687425695c")
+	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/item/160705.json?print=pretty")
 	if err != nil{panic(err.Error())}
 	body, err := ioutil.ReadAll(resp.Body)
 	jsonstring := fmt.Sprintf("%s", body)
@@ -222,12 +222,15 @@ func searchQuery(client *gocapiclient.GuardianContentClient, g *GuardianAPI) {
 	fmt.Println(searchQuery.Response.Status)
 	fmt.Println(searchQuery.Response.Total)
 
-	for _, v := range searchQuery.Response.Results {
-		g.title = v.WebTitle
-		g.weburl = v.WebUrl
-		g.id = v.ID
-		g.apiurl = v.ApiUrl
-		g.body = *v.Fields.Body
+	for i, v := range searchQuery.Response.Results {
+		if i == 0 {
+			g.title = v.WebTitle
+			g.weburl = v.WebUrl
+			g.id = v.ID
+			g.apiurl = v.ApiUrl
+			g.body = *v.Fields.Body
+			fmt.Println(i)
+		}
 		fmt.Println(v.ID)
 		fmt.Println(v.WebTitle)
 	}
