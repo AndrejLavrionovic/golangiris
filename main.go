@@ -202,14 +202,14 @@ func searchQueryPaged(client *gocapiclient.GuardianContentClient) {
 func searchQuery(client *gocapiclient.GuardianContentClient, g *GuardianAPI) {
 	searchQuery := queries.NewSearchQuery()
 
-	showParam := queries.StringParam{"q", "tech%20AND%20technology"}
-	showSection := queries.StringParam{"section", "technology"}
+	//showParam := queries.StringParam{"q", "tech%20AND%20technology"}
+	//showSection := queries.StringParam{"section", "technology"}
 	showPages := queries.StringParam{"page", "1"}
 	showPageSize := queries.StringParam{"page-seze", "1"}
 	showOrderBy := queries.StringParam{"order-by", "newest"}
 	showTotal := queries.StringParam{"total", "1"}
 	showFields := queries.StringParam{"show-fields", "body"}
-	params := []queries.Param{&showParam, showSection, showPages, showPageSize, showOrderBy, showTotal, showFields}
+	params := []queries.Param{showPages, showPageSize, showOrderBy, showTotal, showFields}
 
 	searchQuery.Params = params
 
